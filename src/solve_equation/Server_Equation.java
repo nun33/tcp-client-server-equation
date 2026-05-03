@@ -20,7 +20,7 @@ public class Server_Equation {
             server = new ServerSocket(5000);
             System.out.println("Server is running...");
 
-            //server is waiting until a connection is established, waiting for the client
+            //TCP handshake 
             socket = server.accept();
             System.out.println("Client Connected");
 
@@ -31,19 +31,18 @@ public class Server_Equation {
                 new OutputStreamWriter(socket.getOutputStream()), true 
             );
 
-            //welcoming msg sent to client, TCP connection established
             output.println("Welcome! Send coefficients.");
 
             //infinite loop cuz the server is required to handle multiple requests from same client
             while(true) {
                 String msg = input.readLine();
 
-                //handling dissconnection
+                //client closed connection
                 if(msg == null){
                     break;
                 }
 
-                //handling exists
+                //handle client request to close connection
                 if (msg.equals("EXIT")) {
                     output.println("Connection closed.");
                     break;
@@ -52,7 +51,7 @@ public class Server_Equation {
                 //parsing input 
                 String[] parts = msg.split(" ");
                 
-                //converting input to nums
+                //converting input to int
                 int p1 = Integer.parseInt(parts[0]);
                 int p2 = Integer.parseInt(parts[1]);
                 int p3 = Integer.parseInt(parts[2]);
@@ -83,7 +82,7 @@ public class Server_Equation {
                 for (int z = 0; z <=100; z++) {
 
                     if (p1 * x + p2 *y + p3 * z == result) {
-                        return "x=" + x + ", y=" + y + ", z =" + z;
+                        return "x=" + x + ", y=" + y + ", z=" + z;
                     }
                 }
             }
