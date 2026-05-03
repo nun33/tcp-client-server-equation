@@ -16,9 +16,11 @@ public class Server_Equation {
         ServerSocket server = null;
         Socket socket = null;
         try{
+            //Server is waiting for a connection to happen over port 5000, listening
             server = new ServerSocket(5000);
             System.out.println("Server is running...");
 
+            //server is waiting until a connection is established, waiting for the client
             socket = server.accept();
             System.out.println("Client Connected");
 
@@ -29,22 +31,28 @@ public class Server_Equation {
                 new OutputStreamWriter(socket.getOutputStream()), true 
             );
 
+            //welcoming msg sent to client, TCP connection established
             output.println("Welcome! Send coefficients.");
 
+            //infinite loop cuz the server is required to handle multiple requests from same client
             while(true) {
                 String msg = input.readLine();
 
+                //handling dissconnection
                 if(msg == null){
                     break;
                 }
 
+                //handling exists
                 if (msg.equals("EXIT")) {
                     output.println("Connection closed.");
                     break;
                 }
 
+                //parsing input 
                 String[] parts = msg.split(" ");
                 
+                //converting input to nums
                 int p1 = Integer.parseInt(parts[0]);
                 int p2 = Integer.parseInt(parts[1]);
                 int p3 = Integer.parseInt(parts[2]);
@@ -54,10 +62,12 @@ public class Server_Equation {
                 String answer = solve(p1, p2, p3, result);
                 output.println(answer);
             }
+            //handling the error if smth happens example: network fails, connection breaks, stream fails
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
+                //closing resources, prevents memory leaks, port stayin' busy, even if an error happens it must closes it 
                 if (socket != null) socket.close();
                 if (server != null) server.close();
             } catch (IOException e) {
