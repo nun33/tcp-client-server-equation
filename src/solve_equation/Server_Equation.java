@@ -24,7 +24,7 @@ public class Server_Equation {
             socket = server.accept();
             System.out.println("Client Connected");
 
-            System.out.println("Client Connected :" + socket.InetAddress().getHostAddress());
+            System.out.println("Client Connected :" + socket.getInetAddress().getHostAddress());
 
             BufferedReader input = new BufferedReader(
                 new InputStreamReader(socket.getInputStream())
@@ -46,7 +46,7 @@ public class Server_Equation {
 
                 //handle client request to close connection
                 if (msg.equals("EXIT")) {
-                    System.out.println("Connection closed by client :" + socket.InetAddress().getHostAddress());
+                    System.out.println("Connection closed by client :" + socket.getInetAddress().getHostAddress());
                     break;
                 }
 
