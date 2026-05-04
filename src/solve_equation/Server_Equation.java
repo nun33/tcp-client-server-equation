@@ -24,6 +24,8 @@ public class Server_Equation {
             socket = server.accept();
             System.out.println("Client Connected");
 
+            System.out.println("Client Connected :" + socket.InetAddress().getHostAddress());
+
             BufferedReader input = new BufferedReader(
                 new InputStreamReader(socket.getInputStream())
             );
@@ -44,7 +46,7 @@ public class Server_Equation {
 
                 //handle client request to close connection
                 if (msg.equals("EXIT")) {
-                    output.println("Connection closed.");
+                    System.out.println("Connection closed by client :" + socket.InetAddress().getHostAddress());
                     break;
                 }
 
@@ -57,8 +59,10 @@ public class Server_Equation {
                 int p3 = Integer.parseInt(parts[2]);
                 int result = Integer.parseInt(parts[3]);
 
+                System.out.println("[Server] Solving: " + p1 + "*x +" + p2 + "*y + " + p3 + "*z =" + result);
 
                 String answer = solve(p1, p2, p3, result);
+                System.out.println("[Server] Response sent: " + answer);
                 output.println(answer);
             }
             //handling the error if smth happens example: network fails, connection breaks, stream fails
