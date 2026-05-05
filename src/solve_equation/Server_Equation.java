@@ -16,16 +16,18 @@ public class Server_Equation {
         ServerSocket server = null;
         Socket socket = null;
         try{
-            //Server is waiting for a connection to happen over port 5000, listening
+            // ----------- Step 1: Create a ServerSocket and start listening on port 5000 ----------
             server = new ServerSocket(5000);
             System.out.println("Server is running...");
 
-            //TCP handshake 
+            // ----------- Step 2: Wait for a client to connect (TCP handshake) ----------
             socket = server.accept();
             System.out.println("Client Connected");
 
+            // Display client's IP address
             System.out.println("Client Connected :" + socket.getInetAddress().getHostAddress());
 
+            // ----------- Step 3: Set up input and output streams ----------
             BufferedReader input = new BufferedReader(
                 new InputStreamReader(socket.getInputStream())
             );
@@ -33,27 +35,27 @@ public class Server_Equation {
                 new OutputStreamWriter(socket.getOutputStream()), true 
             );
 
+            // Send welcome message to client
             output.println("Welcome! Send coefficients.");
 
-            //infinite loop cuz the server is required to handle multiple requests from same client
+            // ----------- Step 4: Main loop to handle client requests ----------
             while(true) {
                 String msg = input.readLine();
 
-                //client closed connection
+                // If client disconnects (stream closed)
                 if(msg == null){
                     break;
                 }
 
-                //handle client request to close connection
+                // If client requests to terminate connection
                 if (msg.equals("EXIT")) {
                     System.out.println("Connection closed by client :" + socket.getInetAddress().getHostAddress());
                     break;
                 }
 
-                //parsing input 
+                // ----------- Step 5: Parse the received equation ----------
                 String[] parts = msg.split(" ");
                 
-                //converting input to int
                 int p1 = Integer.parseInt(parts[0]);
                 int p2 = Integer.parseInt(parts[1]);
                 int p3 = Integer.parseInt(parts[2]);
@@ -61,16 +63,20 @@ public class Server_Equation {
 
                 System.out.println("[Server] Solving: " + p1 + "*x +" + p2 + "*y + " + p3 + "*z =" + result);
 
+                // ----------- Step 6: Solve the equation ----------
                 String answer = solve(p1, p2, p3, result);
+
+                // Send result back to client
                 System.out.println("[Server] Response sent: " + answer);
                 output.println(answer);
             }
             //handling the error if smth happens example: network fails, connection breaks, stream fails
         } catch (IOException e) {
+            // ----------- Step 7: Handle communication errors ----------
             e.printStackTrace();
         } finally {
+            // ----------- Step 8: Close resources (socket + server) ----------
             try {
-                //closing resources, prevents memory leaks, port stayin' busy, even if an error happens it must closes it 
                 if (socket != null) socket.close();
                 if (server != null) server.close();
             } catch (IOException e) {
@@ -79,6 +85,9 @@ public class Server_Equation {
         }
     }
 
+    // ----------- Helper Method: Solve the equation ----------
+    // Tries all values from 0 to 100 for x, y, z
+    // Returns the first valid solution found
     public static String solve(int p1, int p2, int p3, int result) {
 
         for (int x = 0; x <= 100; x++) {
@@ -92,6 +101,7 @@ public class Server_Equation {
             }
         }
 
+        // No solution found in the given range
         return "No Answer";
     }
 }
