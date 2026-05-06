@@ -2,7 +2,6 @@ package solve_equation;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,73 +10,39 @@ import java.io.PrintWriter;
 
 public class Server_Equation {
 
-    public static void main (String[] args){
+    public static void main(String[] args) {
 
         ServerSocket server = null;
-        Socket socket = null;
-        try{
-            // ----------- Step 1: Create a ServerSocket and start listening on port 5000 ----------
+        try {
+            // Create server socket on port 5000
+            // This is the port clients will connect to
             server = new ServerSocket(5000);
             System.out.println("Server is running...");
 
-            // ----------- Step 2: Wait for a client to connect (TCP handshake) ----------
-            socket = server.accept();
-            System.out.println("Client Connected");
+            // ----------- Step1 : Keep server alive and always listening ---------------------------
+            // This loop keeps running forever so the server can accept multiple clients
+            while (true) {
 
-            // Display client's IP address
-            System.out.println("Client Connected :" + socket.getInetAddress().getHostAddress());
+                // Wait until a client connects
+                Socket socket = server.accept();
 
-            // ----------- Step 3: Set up input and output streams ----------
-            BufferedReader input = new BufferedReader(
-                new InputStreamReader(socket.getInputStream())
-            );
-            PrintWriter output = new PrintWriter(
-                new OutputStreamWriter(socket.getOutputStream()), true 
-            );
+                // Print client IP just for tracking
+                System.out.println("Client Connected: " + socket.getInetAddress().getHostAddress());
 
-            // Send welcome message to client
-            output.println("Welcome! Send coefficients.");
+                // ----------- Step 2: Handle each client in a separate thread ---------------------------
+                // This is important so multiple clients can use the server at the same time
+                Thread clientThread = new Thread(() -> handleClient(socket));
 
-            // ----------- Step 4: Main loop to handle client requests ----------
-            while(true) {
-                String msg = input.readLine();
-
-                // If client disconnects (stream closed)
-                if(msg == null){
-                    break;
-                }
-
-                // If client requests to terminate connection
-                if (msg.equals("EXIT")) {
-                    System.out.println("Connection closed by client :" + socket.getInetAddress().getHostAddress());
-                    break;
-                }
-
-                // ----------- Step 5: Parse the received equation ----------
-                String[] parts = msg.split(" ");
-                
-                int p1 = Integer.parseInt(parts[0]);
-                int p2 = Integer.parseInt(parts[1]);
-                int p3 = Integer.parseInt(parts[2]);
-                int result = Integer.parseInt(parts[3]);
-
-                System.out.println("[Server] Solving: " + p1 + "*x +" + p2 + "*y + " + p3 + "*z =" + result);
-
-                // ----------- Step 6: Solve the equation ----------
-                String answer = solve(p1, p2, p3, result);
-
-                // Send result back to client
-                System.out.println("[Server] Response sent: " + answer);
-                output.println(answer);
+                // Start the thread (this runs handleClient method)
+                clientThread.start();
             }
-            //handling the error if smth happens example: network fails, connection breaks, stream fails
+
         } catch (IOException e) {
-            // ----------- Step 7: Handle communication errors ----------
+            // If something goes wrong with server setup
             e.printStackTrace();
         } finally {
-            // ----------- Step 8: Close resources (socket + server) ----------
             try {
-                if (socket != null) socket.close();
+                // Always close the server when program ends
                 if (server != null) server.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -85,23 +50,90 @@ public class Server_Equation {
         }
     }
 
-    // ----------- Helper Method: Solve the equation ----------
-    // Tries all values from 0 to 100 for x, y, z
-    // Returns the first valid solution found
-    public static String solve(int p1, int p2, int p3, int result) {
+    // ----------- Step 3: This method handles one client ---------------------------
+    // Each client gets its own execution of this method inside a thread
+    private static void handleClient(Socket socket) {
+        try {
 
-        for (int x = 0; x <= 100; x++) {
-            for (int y = 0; y <= 100; y++) {
-                for (int z = 0; z <=100; z++) {
+            // Used to read data coming from the client
+            BufferedReader input = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
 
-                    if (p1 * x + p2 *y + p3 * z == result) {
-                        return "x=" + x + ", y=" + y + ", z=" + z;
-                    }
+            // Used to send data to the client
+            PrintWriter output = new PrintWriter(
+                new OutputStreamWriter(socket.getOutputStream()), true
+            );
+
+            // Send a welcome message when client connects
+            output.println("Welcome! Send coefficients.");
+
+            // Keep reading messages from client until they disconnect
+            while (true) {
+
+                // Read one line sent from client
+                String msg = input.readLine();
+
+                // If client disconnects, msg will be null
+                if (msg == null) break;
+
+                // If client wants to exit
+                if (msg.equals("EXIT")) {
+                    output.println("Connection closed.");
+                    System.out.println("Connection closed by client: " + socket.getInetAddress().getHostAddress());
+                    break;
                 }
+
+                // Expected format: "p1 p2 p3 result"
+                // Example: "2 3 4 20"
+                String[] parts = msg.split(" ");
+
+                // Convert string values to integers
+                int p1 = Integer.parseInt(parts[0]);
+                int p2 = Integer.parseInt(parts[1]);
+                int p3 = Integer.parseInt(parts[2]);
+                int result = Integer.parseInt(parts[3]);
+
+                // print what equation we are solving
+                System.out.println("[Server] Solving: " + p1 + "*x + " + p2 + "*y + " + p3 + "*z = " + result);
+
+                // Call solve method to find values of x, y, z
+                String answer = solve(p1, p2, p3, result);
+
+                // Print result on server side (for debugging)
+                System.out.println("[Server] Response sent: " + answer);
+
+                // Send result back to client
+                output.println(answer);
+            }
+
+        } catch (IOException e) {
+            // Handles communication errors
+            e.printStackTrace();
+        } finally {
+            try {
+                // Always close socket after client is done
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
+    }
 
-        // No solution found in the given range
+    // ----------- Step 4: Solve the equation ---------------------------
+    public static String solve(int p1, int p2, int p3, int result) {
+
+        for (int x = 0; x <= 100; x++)
+            for (int y = 0; y <= 100; y++)
+                for (int z = 0; z <= 100; z++)
+
+                    // Check if this combination satisfies the equation
+                    if (p1 * x + p2 * y + p3 * z == result)
+
+                        // Return first solution found
+                        return "x=" + x + ", y=" + y + ", z=" + z;
+
+        // If no solution found in range
         return "No Answer";
     }
 }
